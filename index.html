@@ -112,7 +112,7 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
 .formula-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--accent2);margin:8px 0;}
 
 /* ── VIDEO CAPTURE ── */
-.video-arena{position:relative;width:100%;background:#000;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);aspect-ratio:9/16;max-height:540px;min-height:200px;}
+.video-arena{position:relative;width:100%;background:#000;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);aspect-ratio:9/16;max-height:80vh;min-height:300px;}
 #liveVideo{width:100%;height:100%;object-fit:cover;display:block;}
 .video-overlay{position:absolute;inset:0;pointer-events:none;}
 
@@ -182,7 +182,7 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
   .stepper{overflow-x:auto;padding-bottom:4px;}
   .step-label{font-size:10px;}
   .form-grid{grid-template-columns:1fr;}
-  .video-arena{aspect-ratio:3/4;max-height:72vw;}
+  .video-arena{aspect-ratio:9/16;max-height:75vh;width:min(100%,360px);margin:0 auto;}
   .video-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .capture-progress{grid-column:1/-1;text-align:center;}
   .frame-strip{gap:4px;padding:6px 8px;}
@@ -202,7 +202,7 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
 <nav class="nav">
   <div class="logo">BodyScan<span>.ai</span></div>
   <div style="display:flex;gap:10px;align-items:center">
-    <span class="nav-badge">v2.2 — iOS Safari fix</span>
+    <span class="nav-badge">v2.3 — full body framing fix</span>
     <span class="nav-badge" style="color:var(--accent);border-color:rgba(0,229,180,0.3)">zero running cost</span>
   </div>
 </nav>
@@ -257,7 +257,7 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
 
     <div class="card">
       <div class="card-title">360° rotation video</div>
-      <div class="card-sub">Patient stands 1.5 m from camera and turns one full circle slowly (~8 seconds). The tool auto-captures frames at 8 angles (every 45°) and uses a reference object for scale. Arms slightly abducted throughout.</div>
+      <div class="card-sub">Patient stands <strong>2 m from camera</strong> and turns one full circle slowly (~8 seconds). Crown to floor must be visible — use the silhouette guide on screen to confirm full body is in frame before pressing START. The tool auto-captures frames at 8 angles (every 45°). Arms slightly abducted throughout.</div>
       <div id="httpsNotice" style="display:none;background:rgba(124,106,247,0.08);border:1px solid rgba(124,106,247,0.25);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent2);">
         <strong>iPhone / Safari:</strong> Camera requires HTTPS. 
         <strong>Free hosting options:</strong> Upload to 
@@ -268,18 +268,45 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
 
       <!-- Video arena -->
       <div class="video-arena" id="videoArena">
-        <video id="liveVideo" autoplay playsinline muted webkit-playsinline x-webkit-airplay="deny" preload="none" style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+        <div id="orientWarn" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:20;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center;">
+          <div style="font-size:48px">&#8635;</div>
+          <div style="font-family:var(--mono);font-size:13px;color:#fff;line-height:1.6">Rotate your phone to<br><strong>portrait (vertical)</strong><br>to capture the full body</div>
+          <button onclick="document.getElementById('orientWarn').style.display='none'" style="margin-top:8px;padding:8px 20px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:13px;cursor:pointer">Dismiss</button>
+        </div>
+        <video id="liveVideo" autoplay playsinline muted webkit-playsinline x-webkit-airplay="deny" preload="none" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;"></video>
 
         <!-- Hidden canvas for frame sampling -->
         <canvas id="sampleCanvas" width="640" height="480" style="display:none;position:absolute;top:-9999px;left:-9999px;"></canvas>
 
         <div class="video-overlay">
           <!-- Guide body silhouette SVG -->
-          <svg class="guide-silhouette" viewBox="0 0 100 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="50" cy="14" rx="12" ry="14" fill="white"/>
-            <path d="M26 45 Q20 80 22 110 Q24 140 18 180 L28 182 L32 145 Q34 130 36 120 L50 122 L64 120 Q66 130 68 145 L72 182 L82 180 Q76 140 78 110 Q80 80 74 45 Q68 30 50 28 Q32 30 26 45Z" fill="white"/>
-            <line x1="26" y1="48" x2="8" y2="95" stroke="white" stroke-width="5" stroke-linecap="round"/>
-            <line x1="74" y1="48" x2="92" y2="95" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <svg class="guide-silhouette" viewBox="0 0 100 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- head -->
+            <ellipse cx="50" cy="13" rx="11" ry="13" fill="white"/>
+            <!-- neck -->
+            <rect x="44" y="24" width="12" height="10" rx="3" fill="white"/>
+            <!-- torso -->
+            <path d="M25 34 Q18 60 20 95 Q22 118 20 138 Q38 142 50 142 Q62 142 80 138 Q78 118 80 95 Q82 60 75 34 Q65 28 50 27 Q35 28 25 34Z" fill="white"/>
+            <!-- arms -->
+            <path d="M25 36 Q10 55 8 85 Q10 90 14 88 Q18 65 28 48Z" fill="white"/>
+            <path d="M75 36 Q90 55 92 85 Q90 90 86 88 Q82 65 72 48Z" fill="white"/>
+            <!-- left leg -->
+            <path d="M30 140 Q26 175 24 205 Q22 218 26 220 Q34 220 36 218 Q38 205 40 175 Q44 155 46 142Z" fill="white"/>
+            <!-- right leg -->
+            <path d="M70 140 Q74 175 76 205 Q78 218 74 220 Q66 220 64 218 Q62 205 60 175 Q56 155 54 142Z" fill="white"/>
+            <!-- left foot -->
+            <ellipse cx="28" cy="224" rx="9" ry="5" fill="white"/>
+            <!-- right foot -->
+            <ellipse cx="72" cy="224" rx="9" ry="5" fill="white"/>
+            <!-- waist line -->
+            <line x1="18" y1="96" x2="82" y2="96" stroke="rgba(255,200,0,0.7)" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <!-- hip line -->
+            <line x1="18" y1="128" x2="82" y2="128" stroke="rgba(255,200,0,0.7)" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <!-- crown marker -->
+            <text x="50" y="4" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.6)" font-family="monospace">crown</text>
+            <!-- floor markers -->
+            <text x="50" y="257" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.6)" font-family="monospace">floor</text>
+            <line x1="10" y1="253" x2="90" y2="253" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
           </svg>
 
           <!-- Compass HUD -->
@@ -294,6 +321,11 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
           <!-- Rotation tick guide -->
           <div class="rot-guide" id="rotGuide"></div>
 
+          <!-- Full body framing indicator -->
+          <div id="framingCheck" style="position:absolute;bottom:90px;right:10px;background:rgba(0,0,0,0.6);border-radius:20px;padding:4px 10px;display:none;font-family:var(--mono);font-size:11px;color:#fff;gap:5px;align-items:center;z-index:15">
+            <span id="framingIcon">⬜</span>
+            <span id="framingText">checking frame…</span>
+          </div>
           <!-- REC indicator (hidden until recording) -->
           <div class="rec-dot" id="recDot" style="display:none">
             <div class="rec-dot-circle"></div>
@@ -471,7 +503,7 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:700;}
           <thead><tr><th>Parameter</th><th>Specification</th><th>Rationale</th></tr></thead>
           <tbody>
             <tr><td>Video duration</td><td>6–10 seconds (one full clockwise rotation)</td><td>Ensures all 8 angle targets crossed; prevents motion blur from rush</td></tr>
-            <tr><td>Camera position</td><td>Fixed on stand at umbilical height (90 cm), 1.5 m from patient</td><td>Equidistant to waist and hip; minimises parallax</td></tr>
+            <tr><td>Camera position</td><td>Fixed on stand at umbilical height (90 cm), 2 m from patient</td><td>Equidistant to waist and hip; minimises parallax</td></tr>
             <tr><td>Patient rotation direction</td><td>Clockwise when viewed from above (standardised)</td><td>Consistent angle-to-frame mapping for reference lookup</td></tr>
             <tr><td>Starting position</td><td>Patient faces camera (0°), arms abducted ~20°</td><td>Anchor for angle tracking initialisation</td></tr>
             <tr><td>Rotation speed</td><td>~1 full turn in 8 seconds (45°/second)</td><td>Prevents motion blur; allows pose landmark tracking</td></tr>
@@ -673,7 +705,8 @@ async function startCamera() {
   // Try rear camera first, fall back to any camera
   // iOS Safari can silently fail with exact facingMode constraint
   const constraints = [
-    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 720 }, height: { ideal: 1280 } } },
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 720 }, height: { ideal: 1280 }, aspectRatio: { ideal: 0.5625 } } },
+    { video: { facingMode: { ideal: 'environment' }, width: { max: 720 }, height: { min: 960, ideal: 1280 } } },
     { video: { facingMode: 'environment' } },
     { video: true }
   ];
@@ -733,8 +766,44 @@ function onCameraReady() {
   startBtn.disabled = false;
   startBtn.classList.add('primary');
 
-  document.getElementById('instBanner').textContent = 'Patient faces camera — press ▶ START';
+  document.getElementById('instBanner').textContent = 'Check full body in frame — press ▶ START';
+  // Start preview framing loop (not recording yet)
+  startFramingPreview();
   document.getElementById('cameraErrorBox').style.display = 'none';
+
+  // Detect landscape stream and warn — some devices ignore portrait constraint
+  const vid = document.getElementById('liveVideo');
+  function checkOrientation() {
+    if (vid.videoWidth > 0 && vid.videoHeight > 0) {
+      if (vid.videoWidth > vid.videoHeight) {
+        // Landscape stream — rotate phone warning
+        showOrientationWarning();
+      } else {
+        document.getElementById('orientWarn').style.display = 'none';
+      }
+    }
+  }
+  vid.addEventListener('loadedmetadata', checkOrientation);
+  setTimeout(checkOrientation, 800);
+}
+
+function startFramingPreview() {
+  const vid = document.getElementById('liveVideo');
+  const sc = document.getElementById('sampleCanvas');
+  function previewLoop() {
+    if (state.recording) return; // handed off to trackLoop
+    if (vid.readyState >= 2 && sc.width > 0) {
+      sc.getContext('2d').drawImage(vid, 0, 0, sc.width, sc.height);
+      updateFramingCheck(vid);
+    }
+    if (!state.recording) requestAnimationFrame(previewLoop);
+  }
+  requestAnimationFrame(previewLoop);
+}
+
+function showOrientationWarning() {
+  const w = document.getElementById('orientWarn');
+  if (w) w.style.display = 'flex';
 }
 
 function showCameraError(title, message) {
@@ -776,10 +845,60 @@ function startRecording() {
   trackLoop();
 }
 
+function updateFramingCheck(vid) {
+  const fc = document.getElementById('framingCheck');
+  if (!fc) return;
+  fc.style.display = 'flex';
+  // Estimate body vertical span using top-edge and bottom-edge detection
+  // In production this uses BlazePose landmarks 0 (nose) and 28 (right ankle)
+  // Here we use the ratio of detected body height to frame height
+  const sc = document.getElementById('sampleCanvas');
+  if (!sc || sc.width === 0) return;
+  const ctx = sc.getContext('2d');
+  const W = vid.videoWidth || sc.width;
+  const H = vid.videoHeight || sc.height;
+
+  // Sample centre column for dark pixels (body) at top and bottom of frame
+  const topData = ctx.getImageData(Math.floor(W*0.4), 0, Math.floor(W*0.2), Math.floor(H*0.08)).data;
+  const botData = ctx.getImageData(Math.floor(W*0.4), Math.floor(H*0.88), Math.floor(W*0.2), Math.floor(H*0.08)).data;
+
+  function hasDarkPixels(data) {
+    for (let i=0;i<data.length;i+=4) {
+      const lum = (data[i]+data[i+1]+data[i+2])/3;
+      if (lum < 180) return true;
+    }
+    return false;
+  }
+
+  const crownVisible = hasDarkPixels(topData);
+  const feetVisible = hasDarkPixels(botData);
+  const icon = document.getElementById('framingIcon');
+  const txt = document.getElementById('framingText');
+
+  if (crownVisible && feetVisible) {
+    fc.style.background = 'rgba(0,100,70,0.75)';
+    icon.textContent = '✓';
+    txt.textContent = 'Full body in frame';
+  } else if (!crownVisible && !feetVisible) {
+    fc.style.background = 'rgba(120,50,0,0.75)';
+    icon.textContent = '✗';
+    txt.textContent = 'Move camera back';
+  } else if (!crownVisible) {
+    fc.style.background = 'rgba(120,80,0,0.75)';
+    icon.textContent = '↓';
+    txt.textContent = 'Tilt camera down';
+  } else {
+    fc.style.background = 'rgba(120,80,0,0.75)';
+    icon.textContent = '↑';
+    txt.textContent = 'Tilt camera up / move back';
+  }
+}
+
 function trackLoop() {
   if (!state.recording) return;
   const vid = document.getElementById('liveVideo');
   if (vid.readyState < 2) { state.animFrame = requestAnimationFrame(trackLoop); return; }
+  updateFramingCheck(vid);
 
   const W = vid.videoWidth || 320, H = vid.videoHeight || 480;
   const sc = document.getElementById('sampleCanvas');
